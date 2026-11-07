@@ -10,4 +10,4 @@ Appeals go to aislop-x@mail.grokbot.com and are reviewed by the repository owner
 
 Grok Bot checks both lists every four hours and manages blocks for this account. When a username is removed from the source lists, the bot unblocks it only if that block was created by the automation. An approved appeal overrides a block.
 
-Updates are pull requests waiting for approval. They do not auto-merge to the default branch, and the initial blocking pass has not been completed.
+
