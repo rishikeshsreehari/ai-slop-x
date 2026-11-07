@@ -1,6 +1,6 @@
 # ai-slop-x
 
-![usernames](https://img.shields.io/badge/usernames-790-blue)
+![usernames](https://img.shields.io/badge/usernames-793-blue)
 
 This repository mirrors the union of two public X lists: [ai slop posters](https://x.com/i/lists/2116659176894071283) and [AI slop additions](https://x.com/i/lists/2119015827240309009).
 
