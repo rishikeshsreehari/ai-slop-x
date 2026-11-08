@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Slop List X</title>
+    <meta name="description" content="Community-maintained snapshot of suspected AI spam handles from the ai-slop-x repository. Not proof that any account uses AI, and not the live state of X.">
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0 auto;
+        max-width: 46rem;
+        padding: 1.25rem 1rem 2.5rem;
+        color: #1c1916;
+        background: #f6f4ef;
+        font: 1.05rem/1.45 system-ui, sans-serif;
+      }
+      h1 { font-size: clamp(2rem, 6vw, 2.75rem); line-height: 1.05; margin: 0 0 0.6rem; }
+      h2 { font-size: 1.25rem; margin: 0 0 0.4rem; }
+      a { color: #6d2f1e; }
+      a:focus-visible, button:focus-visible, input:focus-visible {
+        outline: 2px solid #1c1916;
+        outline-offset: 2px;
+      }
+      .links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 0.9rem 0; }
+      .links a { font-weight: 700; }
+      .banner {
+        margin: 1rem 0;
+        padding: 0.85rem 1rem;
+        background: #fff4e5;
+        border: 2px solid #8a4b08;
+      }
+      .caveat, .hint, .source p { color: #3f3a33; }
+      .hint { margin: 0.35rem 0 0; font-size: 0.95rem; }
+      label { display: block; font-weight: 700; margin-bottom: 0.3rem; }
+      input[type="search"] {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 2.75rem;
+        padding: 0.4rem 0.6rem;
+        font: inherit;
+        border: 1px solid #6b645b;
+        background: #fff;
+        color: inherit;
+      }
+      #counts { font-variant-numeric: tabular-nums; }
+      .pager { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
+      button {
+        min-height: 2.5rem;
+        padding: 0.3rem 0.8rem;
+        font: inherit;
+        font-weight: 700;
+        background: #1c1916;
+        color: #f6f4ef;
+        border: 1px solid #1c1916;
+        cursor: pointer;
+      }
+      button:disabled { background: #d9d3c8; color: #5c564c; border-color: #b7ad9e; cursor: not-allowed; }
+      ul { padding-left: 1.2rem; }
+      li { margin: 0.2rem 0; }
+      .sources { margin-top: 2rem; }
+      .source { margin: 0 0 1rem; }
+      .source a { overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI Slop List X</h1>
+      <p class="caveat">A community-maintained list of accounts suspected of AI spam. Source lists can change. This page shows the repository snapshot, not a personal block count and not the live state of X.</p>
+      <p class="banner"><strong>Listing is not proof of AI use.</strong> Think you were listed by mistake? <a href="mailto:aislop-x@mail.grokbot.com?subject=Appeal%20a%20listing&amp;body=X%20handle%3A%0AProfile%20link%3A%0AReason%3A%0A">Appeal by email</a>. Include your X handle, a profile link, and the reason. Appeals are not approved automatically.</p>
+      <p class="links">
+        <a href="https://github.com/rishikeshsreehari/ai-slop-x">GitHub repository</a>
+        <a href="./usernames.txt" download="usernames.txt">Download usernames.txt</a>
+        <a href="./usernames.json" download="usernames.json">Download usernames.json</a>
+      </p>
+    </header>
+    <main>
+      <form id="search-form" role="search">
+        <label for="q">Search handles</label>
+        <input id="q" name="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="Name or @handle">
+        <p id="search-hint" class="hint">Case-insensitive. A leading @ is ignored.</p>
+      </form>
+      <p id="counts" aria-live="polite" aria-atomic="true">Loading the repository snapshot.</p>
+      <div class="pager">
+        <button type="button" id="prev" disabled>Previous</button>
+        <button type="button" id="next" disabled>Next</button>
+      </div>
+      <div id="status"></div>
+      <ul id="list"></ul>
+      <section class="sources" id="sources" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">Sources</h2>
+        <p class="hint">These sources sit behind the snapshot. This page does not query them live.</p>
+        <article class="source">
+          <h3>Additions list</h3>
+          <p>The additions list used as a source for this repository. This page reads the committed snapshot, not the live list.</p>
+          <p><a href="https://x.com/i/lists/2119015827240309009">https://x.com/i/lists/2119015827240309009</a></p>
+        </article>
+        <article class="source">
+          <h3>Original list</h3>
+          <p>Dillon Mulroy's original list, kept as a historical, optional source. It is currently unavailable (private) and is not a live source.</p>
+          <p><a href="https://x.com/i/lists/2116659176894071283">https://x.com/i/lists/2116659176894071283</a></p>
+        </article>
+        <article class="source">
+          <h3>GitHub repository</h3>
+          <p>Usernames on this page are loaded from <code>usernames.json</code> in the repository.</p>
+          <p><a href="https://github.com/rishikeshsreehari/ai-slop-x">https://github.com/rishikeshsreehari/ai-slop-x</a></p>
+        </article>
+      </section>
+    </main>
+    <script>
+      (function () {
+        "use strict";
+        var PAGE_SIZE = 50;
+        var HANDLE = /^[A-Za-z0-9_]{1,15}$/;
+        var form = document.getElementById("search-form");
+        var input = document.getElementById("q");
+        var counts = document.getElementById("counts");
+        var status = document.getElementById("status");
+        var list = document.getElementById("list");
+        var prev = document.getElementById("prev");
+        var next = document.getElementById("next");
+        var handles = [];
+        var page = 1;
+        var ready = false;
+        var requestId = 0;
+
+        function normalizeQuery(value) {
+          return value.trim().replace(/^@+/, "").toLowerCase();
+        }
+
+        function visibleQuery(value) {
+          var trimmed = value.trim();
+          if (trimmed.length <= 80) return trimmed;
+          return trimmed.slice(0, 79) + "…";
+        }
+
+        function normalizePayload(payload) {
+          if (!Array.isArray(payload)) {
+            var formatError = new Error("format");
+            formatError.kind = "format";
+            throw formatError;
+          }
+          var seen = new Set();
+          var nextHandles = [];
+          for (var i = 0; i < payload.length; i += 1) {
+            var entry = payload[i];
+            if (typeof entry !== "string") continue;
+            var handle = entry.trim().replace(/^@+/, "");
+            if (!HANDLE.test(handle)) continue;
+            var key = handle.toLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            nextHandles.push(handle);
+          }
+          nextHandles.sort(function (a, b) {
+            var left = a.toLowerCase();
+            var right = b.toLowerCase();
+            if (left < right) return -1;
+            if (left > right) return 1;
+            return 0;
+          });
+          return nextHandles;
+        }
+
+        function matches() {
+          var query = normalizeQuery(input.value);
+          if (!query) return handles.slice();
+          return handles.filter(function (handle) {
+            return handle.toLowerCase().indexOf(query) !== -1;
+          });
+        }
+
+        function setPager(current, pages, enabled) {
+          prev.disabled = !enabled || current <= 1;
+          next.disabled = !enabled || current >= pages;
+        }
+
+        function render() {
+          if (!ready) return;
+          status.replaceChildren();
+          var found = matches();
+          var pages = Math.max(1, Math.ceil(found.length / PAGE_SIZE));
+          if (page > pages) page = pages;
+          if (page < 1) page = 1;
+          if (!found.length) {
+            list.replaceChildren();
+            var empty = document.createElement("p");
+            if (!normalizeQuery(input.value)) {
+              counts.textContent = "0 handles in this snapshot.";
+              empty.textContent = "This snapshot does not contain any valid handles.";
+            } else {
+              counts.textContent = handles.length + " in this snapshot. None match.";
+              empty.append("No handles match \"");
+              var quoted = document.createElement("span");
+              quoted.textContent = visibleQuery(input.value);
+              empty.append(quoted, "\".");
+            }
+            status.append(empty);
+            setPager(1, 1, false);
+            return;
+          }
+          var start = (page - 1) * PAGE_SIZE;
+          var slice = found.slice(start, start + PAGE_SIZE);
+          var from = start + 1;
+          var to = start + slice.length;
+          var resultWord = found.length === 1 ? "result" : "results";
+          counts.textContent = handles.length + " in this snapshot. " + found.length + " " + resultWord + ". Page " + page + " of " + pages + ", showing " + from + "–" + to + ".";
+          list.replaceChildren();
+          for (var i = 0; i < slice.length; i += 1) {
+            var handle = slice[i];
+            var item = document.createElement("li");
+            var link = document.createElement("a");
+            link.className = "handle";
+            link.href = "https://x.com/" + encodeURIComponent(handle);
+            link.rel = "noopener noreferrer";
+            link.target = "_blank";
+            link.setAttribute("translate", "no");
+            link.textContent = "@" + handle;
+            item.append(link);
+            list.append(item);
+          }
+          setPager(page, pages, true);
+        }
+
+        function showLoading() {
+          ready = false;
+          list.replaceChildren();
+          status.replaceChildren();
+          counts.textContent = "Loading the repository snapshot.";
+          setPager(1, 1, false);
+        }
+
+        function showError(kind) {
+          ready = false;
+          handles = [];
+          list.replaceChildren();
+          counts.textContent = "The username list is unavailable.";
+          setPager(1, 1, false);
+          var box = document.createElement("div");
+          box.setAttribute("role", "alert");
+          var message = document.createElement("p");
+          message.textContent = kind === "format"
+            ? "The username list is not a JSON list of handles."
+            : "The username list could not be loaded.";
+          var retry = document.createElement("button");
+          retry.type = "button";
+          retry.id = "retry";
+          retry.textContent = "Retry";
+          retry.addEventListener("click", function () { load(); });
+          box.append(message, retry);
+          status.replaceChildren(box);
+        }
+
+        async function load() {
+          var id = ++requestId;
+          showLoading();
+          try {
+            var response = await fetch("./usernames.json", { headers: { Accept: "application/json" } });
+            if (!response.ok) throw Object.assign(new Error("network"), { kind: "network" });
+            var payload;
+            try {
+              payload = await response.json();
+            } catch (parseError) {
+              throw Object.assign(new Error("format"), { kind: "format" });
+            }
+            var nextHandles = normalizePayload(payload);
+            if (id !== requestId) return;
+            handles = nextHandles;
+            ready = true;
+            page = 1;
+            render();
+          } catch (error) {
+            if (id !== requestId) return;
+            showError(error && error.kind === "format" ? "format" : "network");
+          }
+        }
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+        });
+        input.addEventListener("input", function () {
+          page = 1;
+          render();
+        });
+        prev.addEventListener("click", function () {
+          if (page > 1) {
+            page -= 1;
+            render();
+          }
+        });
+        next.addEventListener("click", function () {
+          page += 1;
+          render();
+        });
+        load();
+      })();
+    </script>
+  </body>
+</html>
